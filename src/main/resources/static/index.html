@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KUET Management System | Role-Based Access Control Portal</title>
+  <meta name="description" content="Khulna University of Engineering & Technology (KUET) Management System built with Spring Boot, Spring Security RBAC, JWT, and Docker Compose.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="brand-wrapper">
+      <div class="crest-logo" title="Khulna University of Engineering & Technology">KUET</div>
+      <div class="brand-text">
+        <h1>KUET <span class="highlight">Management System</span></h1>
+        <div class="brand-subtitle">Khulna University of Engineering & Technology • Spring Security RBAC Portal</div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <div class="system-status">
+        <span class="status-dot"></span>
+        <span>REST API Active</span>
+      </div>
+      <div id="userProfileArea">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Quick Demo Role Switcher Toolbar -->
+  <div class="quick-switcher-bar">
+    <div class="switcher-label">
+      <span>⚡ Quick Role Switcher (1-Click Evaluation):</span>
+    </div>
+    <div class="quick-buttons">
+      <button id="btnRoleAdmin" class="btn-quick" onclick="quickLoginAs('ADMIN')" title="Login as Vice-Chancellor / Admin">
+        👑 Admin (VC Prof. Mihir)
+      </button>
+      <button id="btnRoleTeacher" class="btn-quick" onclick="quickLoginAs('TEACHER')" title="Login as CSE Faculty">
+        👨‍🏫 Teacher (Prof. Rokibul)
+      </button>
+      <button id="btnRoleStudent" class="btn-quick" onclick="quickLoginAs('STUDENT')" title="Login as CSE Undergraduate">
+        🎓 Student (Tanvir - 2007001)
+      </button>
+      <button class="btn-quick" onclick="openModal('loginModal')" title="Login with other credentials">
+        🔑 Custom Login
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Application Layout -->
+  <div class="app-container">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="nav-group">
+        <div class="nav-group-title">Navigation</div>
+        
+        <a id="navDashboard" class="nav-item active" onclick="switchTab('dashboard')">
+          <div class="nav-item-content">
+            <span>📊</span>
+            <span>Dashboard</span>
+          </div>
+        </a>
+
+        <a id="navAdmins" class="nav-item" onclick="switchTab('admins')">
+          <div class="nav-item-content">
+            <span>👑</span>
+            <span>Administrators</span>
+          </div>
+          <span class="nav-lock-badge" title="Requires ROLE_ADMIN">🔒 Admin</span>
+        </a>
+
+        <a id="navTeachers" class="nav-item" onclick="switchTab('teachers')">
+          <div class="nav-item-content">
+            <span>👨‍🏫</span>
+            <span>Faculty (Teachers)</span>
+          </div>
+          <span class="nav-lock-badge" title="Restricted for Students">🔒 Staff</span>
+        </a>
+
+        <a id="navStudents" class="nav-item" onclick="switchTab('students')">
+          <div class="nav-item-content">
+            <span>🎓</span>
+            <span>Students</span>
+          </div>
+          <span class="nav-lock-badge" title="Restricted for Teachers">🔒 Students</span>
+        </a>
+
+        <div class="nav-group-title" style="margin-top:1rem">Developer & Tools</div>
+
+        <a id="navApi" class="nav-item" onclick="switchTab('api')">
+          <div class="nav-item-content">
+            <span>⚡</span>
+            <span>REST API Explorer</span>
+          </div>
+        </a>
+
+        <a class="nav-item" href="/h2-console" target="_blank" title="Open H2 Database Console">
+          <div class="nav-item-content">
+            <span>🗄️</span>
+            <span>H2 DB Console</span>
+          </div>
+          <span style="font-size:0.75rem; color:#94a3b8">↗</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="footer-pill">
+          <div style="font-weight:600; color:#fff">KUET UMS v1.0.0</div>
+          <div>Spring Boot 4.1 • Java 25</div>
+          <div>PostgreSQL / H2 • Dockerized</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panels -->
+    <main class="main-content">
+
+      <!-- ================= SECTION: DASHBOARD ================= -->
+      <section id="sectionDashboard" class="tab-section">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>University Management Overview</h2>
+            <p>Role-Based Access Control (RBAC), JWT Authentication, and Enterprise Resource Management for KUET</p>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card admin-card">
+            <div class="stat-info">
+              <p>Administrators</p>
+              <h3 id="statAdmins">--</h3>
+            </div>
+            <div class="stat-icon">👑</div>
+          </div>
+
+          <div class="stat-card teacher-card">
+            <div class="stat-info">
+              <p>Faculty Members</p>
+              <h3 id="statTeachers">--</h3>
+            </div>
+            <div class="stat-icon">👨‍🏫</div>
+          </div>
+
+          <div class="stat-card student-card">
+            <div class="stat-info">
+              <p>Registered Students</p>
+              <h3 id="statStudents">--</h3>
+            </div>
+            <div class="stat-icon">🎓</div>
+          </div>
+
+          <div class="stat-card security-card">
+            <div class="stat-info">
+              <p>Security & Encryption</p>
+              <h3 style="font-size:1.3rem; margin-top:0.4rem; color:var(--kuet-gold)">BCrypt + JWT</h3>
+            </div>
+            <div class="stat-icon">🛡️</div>
+          </div>
+        </div>
+
+        <!-- Live Role-Based Permission Matrix for Current User -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Role-Based Access Control (RBAC) Enforcement Matrix</h3>
+              <p>Real-time permission evaluation for your currently authenticated role</p>
+            </div>
+          </div>
+          <div style="padding: 1.5rem">
+            <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:1rem">
+              📌 <strong>Rule Specification:</strong> Admins can manage all three resources (<code style="color:#ec4899">ROLE_ADMIN</code>), teachers can manage only teachers (<code style="color:#38bdf8">ROLE_TEACHER</code>), and students can manage only students (<code style="color:#34d399">ROLE_STUDENT</code>).
+            </p>
+            <div class="table-responsive">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th>Resource Endpoint</th>
+                    <th>Current Permission Status</th>
+                    <th>RBAC Policy Restriction</th>
+                  </tr>
+                </thead>
+                <tbody id="userPermissionsMatrix">
+                  <!-- Rendered dynamically by app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Architecture Highlights -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Technical Architecture & Implementation Details</h3>
+              <p>Core components configured according to the project specification</p>
+            </div>
+          </div>
+          <div style="padding: 1.5rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem">
+            <div style="background:rgba(255,255,255,0.03); padding:1.25rem; border-radius:10px; border:1px solid var(--border-subtle)">
+              <h4 style="color:#f472b6; margin-bottom:0.4rem">🔐 Spring Security & RBAC</h4>
+              <p style="font-size:0.83rem; color:#94a3b8">Stateless token architecture with <code style="color:#fff">JwtAuthenticationFilter</code>, BCrypt password hashing, method-level <code style="color:#fff">@PreAuthorize</code> annotations, and HTTP 401/403 handlers.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:1.25rem; border-radius:10px; border:1px solid var(--border-subtle)">
+              <h4 style="color:#38bdf8; margin-bottom:0.4rem">🌐 RESTful CRUD API</h4>
+              <p style="font-size:0.83rem; color:#94a3b8">Standardized JSON responses, HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found), and field validation.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:1.25rem; border-radius:10px; border:1px solid var(--border-subtle)">
+              <h4 style="color:#34d399; margin-bottom:0.4rem">🐳 Docker & Compose</h4>
+              <p style="font-size:0.83rem; color:#94a3b8">Production multi-stage <code style="color:#fff">Dockerfile</code> (Temurin 21) and <code style="color:#fff">compose.yaml</code> containerizing Spring Boot and PostgreSQL with automated healthcheck networking.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= SECTION: ADMINISTRATORS ================= -->
+      <section id="sectionAdmins" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>Administrator Management</h2>
+            <p>Manage university executive administrators and system privileges (Restricted to ROLE_ADMIN)</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openCreateAdminModal()">+ Add Administrator</button>
+          </div>
+        </div>
+
+        <div id="adminsLockedWarning" class="rbac-banner" style="display:none">
+          <div class="rbac-banner-icon">🔒</div>
+          <div class="rbac-banner-content">
+            <h4>Access Restricted: ROLE_ADMIN Required</h4>
+            <p>Your currently active role does not have permission to access or manage Administrator resources. Only administrators can view and modify these records.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Registered Administrators</h3>
+              <p>CRUD operations on <code style="color:#ec4899">/api/admins</code></p>
+            </div>
+            <div class="card-filters">
+              <input type="text" class="search-input" placeholder="Search by name, ID, department..." oninput="filterTable('admin', this.value)">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Administrator</th>
+                  <th>Department / Office</th>
+                  <th>Designation</th>
+                  <th>Email Address</th>
+                  <th>Contact Phone</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION: TEACHERS ================= -->
+      <section id="sectionTeachers" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>Faculty & Teacher Management</h2>
+            <p>Manage academic staff and research professors (Accessible by ROLE_ADMIN and ROLE_TEACHER)</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openCreateTeacherModal()">+ Add Faculty Member</button>
+          </div>
+        </div>
+
+        <div id="teachersLockedWarning" class="rbac-banner" style="display:none">
+          <div class="rbac-banner-icon">🔒</div>
+          <div class="rbac-banner-content">
+            <h4>Access Restricted: Faculty or Admin Role Required</h4>
+            <p>Students are not permitted to manage Teacher resources. Only Teachers and Administrators have access to this section.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Faculty Directory</h3>
+              <p>CRUD operations on <code style="color:#38bdf8">/api/teachers</code></p>
+            </div>
+            <div class="card-filters">
+              <input type="text" class="search-input" placeholder="Search by name, ID, department..." oninput="filterTable('teacher', this.value)">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Faculty Member</th>
+                  <th>Academic Department</th>
+                  <th>Designation</th>
+                  <th>Specialization</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teachersTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION: STUDENTS ================= -->
+      <section id="sectionStudents" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>Student Management</h2>
+            <p>Manage undergraduate and graduate enrollments (Accessible by ROLE_ADMIN and ROLE_STUDENT)</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openCreateStudentModal()">+ Register Student</button>
+          </div>
+        </div>
+
+        <div id="studentsLockedWarning" class="rbac-banner" style="display:none">
+          <div class="rbac-banner-icon">🔒</div>
+          <div class="rbac-banner-content">
+            <h4>Access Restricted: Student or Admin Role Required</h4>
+            <p>Teachers are not permitted to manage Student resources. Only Students and Administrators have access to this section.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Student Enrollments</h3>
+              <p>CRUD operations on <code style="color:#34d399">/api/students</code></p>
+            </div>
+            <div class="card-filters">
+              <input type="text" class="search-input" placeholder="Search by name, roll, series..." oninput="filterTable('student', this.value)">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Department</th>
+                  <th>Series</th>
+                  <th>CGPA</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION: REST API EXPLORER ================= -->
+      <section id="sectionApi" class="tab-section" style="display:none">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>Interactive REST API Tester & Documentation</h2>
+            <p>Execute live HTTP requests against the Spring Boot REST endpoints with your current JWT token</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Live Request Sandbox</h3>
+              <p>Test CRUD operations directly against the server</p>
+            </div>
+          </div>
+          <div style="padding: 1.5rem">
+            <div class="form-row" style="margin-bottom:1rem">
+              <div class="form-group" style="flex:0 0 140px">
+                <label class="form-label">HTTP Method</label>
+                <select id="testApiMethod" class="form-control">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1">
+                <label class="form-label">Endpoint URL</label>
+                <input type="text" id="testApiEndpoint" class="form-control" value="/teachers" placeholder="/admins, /teachers, /students/1">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Request Body (JSON - for POST / PUT)</label>
+              <textarea id="testApiBody" class="form-control" rows="4" style="font-family:var(--font-mono); font-size:0.8rem" placeholder='{"fullName": "Sample Name", "email": "sample@kuet.ac.bd"}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="executeCustomApiTest()">Send Request 🚀</button>
+
+            <div style="margin-top:1.5rem">
+              <label class="form-label">Response JSON</label>
+              <pre id="testApiResult" style="background:#070a12; border:1px solid #1e293b; border-radius:8px; padding:1rem; color:#38bdf8; font-family:var(--font-mono); font-size:0.8rem; max-height:300px; overflow-y:auto">// Response will appear here after sending...</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live API Console Bar -->
+      <div class="console-card">
+        <div class="console-header">
+          <div class="console-title">
+            <span>⚡</span>
+            <span>Live REST API & Security Activity Logger</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearApiConsole()">Clear Log</button>
+        </div>
+        <div id="apiConsoleOutput" class="console-body">
+          <div style="color:#64748b; font-style:italic">Console active. API requests and responses will be displayed here in real time...</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal: Admin Form -->
+  <div id="adminModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="adminModalTitle">Add Administrator</h3>
+        <button class="modal-close" onclick="closeModal('adminModal')">&times;</button>
+      </div>
+      <form id="adminForm">
+        <div class="modal-body">
+          <input type="hidden" id="adminId">
+
+          <div class="form-row">
+            <div class="form-group" id="adminUsernameGroup">
+              <label class="form-label">Username *</label>
+              <input type="text" id="adminUsername" class="form-control" placeholder="e.g. admin_rafiq">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Employee ID *</label>
+              <input type="text" id="adminEmployeeId" class="form-control" required placeholder="e.g. KUET-ADM-005">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="adminFullName" class="form-control" required placeholder="e.g. Dr. Md. Rafiqul Islam">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Department / Office *</label>
+              <input type="text" id="adminDepartment" class="form-control" required placeholder="e.g. Office of the Registrar">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Designation *</label>
+              <input type="text" id="adminDesignation" class="form-control" required placeholder="e.g. Registrar">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="adminEmail" class="form-control" required placeholder="e.g. rafiq@kuet.ac.bd">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" id="adminPhone" class="form-control" placeholder="e.g. +880-1711-000000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
+            <div id="adminPasswordHelp" class="form-help">Required (at least 6 characters)</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('adminModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Administrator</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Teacher Form -->
+  <div id="teacherModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="teacherModalTitle">Add Faculty Member</h3>
+        <button class="modal-close" onclick="closeModal('teacherModal')">&times;</button>
+      </div>
+      <form id="teacherForm">
+        <div class="modal-body">
+          <input type="hidden" id="teacherId">
+
+          <div class="form-row">
+            <div class="form-group" id="teacherUsernameGroup">
+              <label class="form-label">Username *</label>
+              <input type="text" id="teacherUsername" class="form-control" placeholder="e.g. teacher_kamal">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teacher ID *</label>
+              <input type="text" id="teacherEmployeeId" class="form-control" required placeholder="e.g. KUET-TCH-015">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="teacherFullName" class="form-control" required placeholder="e.g. Dr. Md. Mostafa Kamal">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Department *</label>
+              <input type="text" id="teacherDepartment" class="form-control" required placeholder="e.g. Mechanical Engineering">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Designation *</label>
+              <input type="text" id="teacherDesignation" class="form-control" required placeholder="e.g. Professor">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Specialization / Research Area</label>
+            <input type="text" id="teacherSpecialization" class="form-control" placeholder="e.g. Robotics, Thermodynamics & Mechatronics">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="teacherEmail" class="form-control" required placeholder="e.g. kamal@me.kuet.ac.bd">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" id="teacherPhone" class="form-control" placeholder="e.g. +880-1712-000000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="teacherPassword" class="form-control" placeholder="••••••••">
+            <div id="teacherPasswordHelp" class="form-help">Required (at least 6 characters)</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('teacherModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Faculty Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Student Form -->
+  <div id="studentModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="studentModalTitle">Register Student</h3>
+        <button class="modal-close" onclick="closeModal('studentModal')">&times;</button>
+      </div>
+      <form id="studentForm">
+        <div class="modal-body">
+          <input type="hidden" id="studentId">
+
+          <div class="form-row">
+            <div class="form-group" id="studentUsernameGroup">
+              <label class="form-label">Username *</label>
+              <input type="text" id="studentUsername" class="form-control" placeholder="e.g. student_sabbir">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Roll Number *</label>
+              <input type="text" id="studentRollNumber" class="form-control" required placeholder="e.g. 2107055">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="studentFullName" class="form-control" required placeholder="e.g. Sabbir Hossain">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Department *</label>
+              <input type="text" id="studentDepartment" class="form-control" required placeholder="e.g. Computer Science & Engineering">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Series / Batch *</label>
+              <input type="text" id="studentSeries" class="form-control" required placeholder="e.g. 2K21">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">CGPA (0.00 - 4.00)</label>
+              <input type="number" step="0.01" min="0" max="4.0" id="studentCgpa" class="form-control" placeholder="3.85">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" id="studentPhone" class="form-control" placeholder="e.g. +880-1811-000000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" id="studentEmail" class="form-control" required placeholder="e.g. sabbir.2107055@stud.kuet.ac.bd">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="studentPassword" class="form-control" placeholder="••••••••">
+            <div id="studentPasswordHelp" class="form-help">Required (at least 6 characters)</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('studentModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Login -->
+  <div id="loginModal" class="modal-overlay">
+    <div class="modal" style="max-width: 440px">
+      <div class="modal-header">
+        <h3>Sign In to KUET UMS</h3>
+        <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
+      </div>
+      <form id="customLoginForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Username or Email</label>
+            <input type="text" id="loginUsername" class="form-control" required placeholder="admin / teacher_rokib / student_tanvir">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
+          </div>
+          <div style="font-size:0.75rem; color:#94a3b8; background:rgba(255,255,255,0.03); padding:0.6rem; border-radius:6px">
+            💡 <strong>Demo Credentials:</strong><br>
+            • Admin: <code style="color:#fff">admin</code> / <code style="color:#fff">admin123</code><br>
+            • Teacher: <code style="color:#fff">teacher_rokib</code> / <code style="color:#fff">teacher123</code><br>
+            • Student: <code style="color:#fff">student_tanvir</code> / <code style="color:#fff">student123</code>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('loginModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Authenticate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Delete Confirmation -->
+  <div id="deleteConfirmModal" class="modal-overlay">
+    <div class="modal" style="max-width: 440px">
+      <div class="modal-header">
+        <h3 style="color:#f87171">Confirm Deletion</h3>
+        <button class="modal-close" onclick="closeModal('deleteConfirmModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteConfirmMessage" style="font-size:0.9rem; color:#cbd5e1"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('deleteConfirmModal')">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="executeDelete()">Permanently Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
