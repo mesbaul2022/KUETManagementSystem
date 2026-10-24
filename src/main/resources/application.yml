@@ -1,0 +1,53 @@
+server:
+  port: ${PORT:8088}
+
+spring:
+  application:
+    name: kuet-management-system
+  profiles:
+    active: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    expiration-milliseconds: 86400000
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:kuet_ums;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db:5432/kuet_ums}
+    username: ${SPRING_DATASOURCE_USERNAME:kuet_admin}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
