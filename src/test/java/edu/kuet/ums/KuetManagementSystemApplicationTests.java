@@ -88,7 +88,7 @@ class KuetManagementSystemApplicationTests {
 
     @Test
     @DisplayName("RBAC: Teacher can access Teacher resources, but FORBIDDEN from Admins and Students")
-    @WithMockUser(username = "teacher_rokib", roles = {"TEACHER"})
+    @WithMockUser(username = "teacher_mahmud", roles = {"TEACHER"})
     void testTeacherCanOnlyManageTeachers() throws Exception {
         // Allowed:
         mockMvc.perform(get("/api/teachers"))
@@ -104,7 +104,7 @@ class KuetManagementSystemApplicationTests {
 
     @Test
     @DisplayName("RBAC: Student can access Student resources, but FORBIDDEN from Admins and Teachers")
-    @WithMockUser(username = "student_tanvir", roles = {"STUDENT"})
+    @WithMockUser(username = "student_mesba", roles = {"STUDENT"})
     void testStudentCanOnlyManageStudents() throws Exception {
         // Allowed:
         mockMvc.perform(get("/api/students"))
@@ -130,7 +130,6 @@ class KuetManagementSystemApplicationTests {
         request.setRollNumber("2007999");
         request.setDepartment("Computer Science & Engineering");
         request.setSeries("2K20");
-        request.setCgpa(3.75);
         request.setPhone("+8801700000000");
 
         // 1. Create Student (201 Created)

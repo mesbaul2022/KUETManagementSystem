@@ -33,13 +33,40 @@
 
 The application automatically seeds the database on startup with the following accounts for immediate testing:
 
-| Role | Username | Password | Full Name | Department / Affiliation |
+### 👑 Administrators (Full CRUD on Admins, Teachers, Students)
+| Username | Password | Full Name | Department / Faculty | Designation |
 | :--- | :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | Prof. Dr. Mihir Ranjan Halder | Office of the Vice-Chancellor |
-| **Teacher** | `teacher_rokib` | `teacher123` | Prof. Dr. Kazi Md. Rokibul Hasan | Computer Science & Engineering |
-| **Teacher** | `teacher_shibbir` | `teacher123` | Dr. Shibbir Ahmed | Electrical & Electronic Engineering |
-| **Student** | `student_tanvir` | `student123` | Tanvir Ahmed (Roll: 2007001) | Computer Science & Engineering (2K20) |
-| **Student** | `student_nusrat` | `student123` | Nusrat Jahan (Roll: 2107042) | Computer Science & Engineering (2K21) |
+| `admin` | `admin123` | Professor Dr. Mohammad Mashud | VC Office | Vice-Chancellor & Chief Administrator |
+| `admin_mahbub` | `admin123` | Dr. Khondoker Mahbub Hassan | Faculty of Civil Engineering | Dean |
+| `admin_rokibul` | `admin123` | Dr. Kazi Md. Rokibul Alam | Faculty of Electrical and Electronic Engineering | Dean |
+| `admin_sultan` | `admin123` | Dr. Mohammad Sultan Mahmud | Faculty of Mechanical Engineering | Dean |
+| `admin_yousuf` | `admin123` | Dr. Mohammad Abu Yousuf | Faculty of Science and Humanities | Dean |
+
+### 👨‍🏫 Faculty & Teachers (Full CRUD on Teachers; 403 on Admins and Students)
+| Username | Password | Full Name | Department | Designation | Email |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `teacher_mahmud` | `teacher123` | Prof. Dr. Al-Mahmud | Computer Science & Engineering | Professor & Head | al-mahmud@cse.kuet.ac.bd |
+| `teacher_shibbir` | `teacher123` | Dr. Shibbir Ahmed | Electrical & Electronic Engineering | Associate Professor | shibbir@eee.kuet.ac.bd |
+| `teacher_saeed` | `teacher123` | Kazi Saeed Alam | Computer Science & Engineering | Assistant Professor | saeed.alam@cse.kuet.ac.bd |
+| `teacher_repon` | `teacher123` | Md. Repon Islam | Computer Science & Engineering | Assistant Professor | repon@cse.kuet.ac.bd |
+| `teacher_sakhawat` | `teacher123` | Md. Sakhawat Hossain | Computer Science & Engineering | Assistant Professor | sakhawat@cse.kuet.ac.bd |
+| `teacher_shawon` | `teacher123` | Md Nazirulhasan Shawon | Computer Science & Engineering | Assistant Professor | shawon@cse.kuet.ac.bd |
+| `teacher_isha` | `teacher123` | Most. Kaniz Fatema Isha | Computer Science & Engineering | Lecturer | isha@cse.kuet.ac.bd |
+| `teacher_tajmilur` | `teacher123` | Md Tajmilur Rahman | Computer Science & Engineering | Lecturer | tajmilur@cse.kuet.ac.bd |
+| `teacher_nfs` | `teacher123` | Nabil Faiyaz Sadi | Computer Science & Engineering | Lecturer | nfs@cse.kuet.ac.bd |
+| `teacher_nawar` | `teacher123` | Subah Nawar | Computer Science & Engineering | Lecturer | Nawar@cse.kuet.ac.bd |
+| `teacher_waliul` | `teacher123` | Waliul Islam Sumon | Computer Science & Engineering | Lecturer | waliul@cse.kuet.ac.bd |
+| `teacher_man` | `teacher123` | Md. Mubtashim Abrar Nihal | Computer Science & Engineering | Lecturer | man@cse.kuet.ac.bd |
+| `teacher_deya` | `teacher123` | Lamisa Bintee Mizan Deya | Computer Science & Engineering | Lecturer | deya@cse.kuet.ac.bd |
+| `teacher_sadia` | `teacher123` | Mst. Sadia Islam | Computer Science & Engineering | Lecturer | sadia@cse.kuet.ac.bd |
+
+### 🎓 Students (Full CRUD on Students; 403 on Admins and Teachers)
+| Username | Password | Full Name | Roll Number | Department | Series | Email |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `student_mesba` | `student123` | Mesbaul Islam | 2207075 | Computer Science & Engineering | 2K22 | mesbaul.2207075@stud.kuet.ac.bd |
+| `student_evon` | `student123` | Ahmed Evon | 2207074 | Computer Science & Engineering | 2K22 | evon.2207074@stud.kuet.ac.bd |
+| `student_safiul` | `student123` | Safiul Islam | 2207068 | Computer Science & Engineering | 2K22 | safiul.2207068@stud.kuet.ac.bd |
+| `student_torikul` | `student123` | Torikul Islam | 2207078 | Computer Science & Engineering | 2K22 | torikul.2207078@stud.kuet.ac.bd |
 
 ---
 
@@ -233,7 +260,6 @@ Authorization: Bearer <JWT_TOKEN>
   "rollNumber": "2207010",
   "department": "Computer Science & Engineering",
   "series": "2K22",
-  "cgpa": 3.92,
   "phone": "+880-1811-998877"
 }
 ```

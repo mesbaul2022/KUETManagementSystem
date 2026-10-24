@@ -6,14 +6,14 @@
   <title>KUET Management System | Role-Based Access Control Portal</title>
   <meta name="description" content="Khulna University of Engineering & Technology (KUET) Management System built with Spring Boot, Spring Security RBAC, JWT, and Docker Compose.">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+  <link rel="icon" type="image/png" href="/images/kuet-logo.png">
 </head>
 <body>
 
   <!-- Top Navigation Header -->
   <header class="top-nav">
     <div class="brand-wrapper">
-      <div class="crest-logo" title="Khulna University of Engineering & Technology">KUET</div>
+      <img src="/images/kuet-logo.png" alt="KUET Crest Logo" class="kuet-logo-img">
       <div class="brand-text">
         <h1>KUET <span class="highlight">Management System</span></h1>
         <div class="brand-subtitle">Khulna University of Engineering & Technology • Spring Security RBAC Portal</div>
@@ -38,13 +38,13 @@
     </div>
     <div class="quick-buttons">
       <button id="btnRoleAdmin" class="btn-quick" onclick="quickLoginAs('ADMIN')" title="Login as Vice-Chancellor / Admin">
-        👑 Admin (VC Prof. Mihir)
+        👑 Admin (VC Prof. Mashud)
       </button>
       <button id="btnRoleTeacher" class="btn-quick" onclick="quickLoginAs('TEACHER')" title="Login as CSE Faculty">
-        👨‍🏫 Teacher (Prof. Rokibul)
+        👨‍🏫 Teacher (Prof. Al-Mahmud)
       </button>
       <button id="btnRoleStudent" class="btn-quick" onclick="quickLoginAs('STUDENT')" title="Login as CSE Undergraduate">
-        🎓 Student (Tanvir - 2007001)
+        🎓 Student (Mesbaul - 2207075)
       </button>
       <button class="btn-quick" onclick="openModal('loginModal')" title="Login with other credentials">
         🔑 Custom Login
@@ -358,7 +358,7 @@
                   <th>Student</th>
                   <th>Department</th>
                   <th>Series</th>
-                  <th>CGPA</th>
+                  <th>Roll Number</th>
                   <th>Email</th>
                   <th>Phone</th>
                   <th style="text-align:right">Actions</th>
@@ -608,15 +608,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">CGPA (0.00 - 4.00)</label>
-              <input type="number" step="0.01" min="0" max="4.0" id="studentCgpa" class="form-control" placeholder="3.85">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone</label>
-              <input type="text" id="studentPhone" class="form-control" placeholder="e.g. +880-1811-000000">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="text" id="studentPhone" class="form-control" placeholder="e.g. +880-1721-000000">
           </div>
 
           <div class="form-group">
@@ -642,24 +636,30 @@
   <div id="loginModal" class="modal-overlay">
     <div class="modal" style="max-width: 440px">
       <div class="modal-header">
-        <h3>Sign In to KUET UMS</h3>
+        <div style="display:flex; align-items:center; gap:0.75rem">
+          <img src="/images/kuet-logo.png" alt="KUET Logo" class="modal-logo-img">
+          <div>
+            <h3 style="margin:0; font-size:1.15rem">Sign In to KUET UMS</h3>
+            <div style="font-size:0.72rem; color:var(--text-muted)">Khulna University of Engineering & Technology</div>
+          </div>
+        </div>
         <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
       </div>
       <form id="customLoginForm">
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">Username or Email</label>
-            <input type="text" id="loginUsername" class="form-control" required placeholder="admin / teacher_rokib / student_tanvir">
+            <input type="text" id="loginUsername" class="form-control" required placeholder="admin / teacher_mahmud / student_mesba">
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
             <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
           </div>
-          <div style="font-size:0.75rem; color:#94a3b8; background:rgba(255,255,255,0.03); padding:0.6rem; border-radius:6px">
-            💡 <strong>Demo Credentials:</strong><br>
-            • Admin: <code style="color:#fff">admin</code> / <code style="color:#fff">admin123</code><br>
-            • Teacher: <code style="color:#fff">teacher_rokib</code> / <code style="color:#fff">teacher123</code><br>
-            • Student: <code style="color:#fff">student_tanvir</code> / <code style="color:#fff">student123</code>
+          <div class="demo-credentials-box">
+            <div style="font-weight:600; margin-bottom:0.35rem; color:var(--text-primary)">💡 Demo Credentials:</div>
+            <div>• Admin: <code>admin</code> / <code>admin123</code></div>
+            <div>• Teacher: <code>teacher_mahmud</code> / <code>teacher123</code></div>
+            <div>• Student: <code>student_mesba</code> / <code>student123</code></div>
           </div>
         </div>
         <div class="modal-footer">

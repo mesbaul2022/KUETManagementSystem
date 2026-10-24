@@ -1,7 +1,5 @@
 package edu.kuet.ums.payload.request;
 
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -26,10 +24,6 @@ public class StudentUpdateRequest {
 
     @NotBlank(message = "Series/Batch is required")
     private String series;
-
-    @DecimalMin(value = "0.0", message = "CGPA must be at least 0.0")
-    @DecimalMax(value = "4.0", message = "CGPA cannot exceed 4.0")
-    private Double cgpa;
 
     private String phone;
 
@@ -82,14 +76,6 @@ public class StudentUpdateRequest {
 
     public void setSeries(String series) {
         this.series = series;
-    }
-
-    public Double getCgpa() {
-        return cgpa;
-    }
-
-    public void setCgpa(Double cgpa) {
-        this.cgpa = cgpa;
     }
 
     public String getPhone() {

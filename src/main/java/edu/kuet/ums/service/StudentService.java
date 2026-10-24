@@ -75,7 +75,6 @@ public class StudentService {
                 request.getRollNumber(),
                 request.getDepartment(),
                 request.getSeries(),
-                request.getCgpa(),
                 request.getPhone()
         );
 
@@ -109,7 +108,6 @@ public class StudentService {
         profile.setRollNumber(request.getRollNumber());
         profile.setDepartment(request.getDepartment());
         profile.setSeries(request.getSeries());
-        profile.setCgpa(request.getCgpa());
         profile.setPhone(request.getPhone());
 
         StudentProfile updatedProfile = studentProfileRepository.save(profile);
@@ -136,7 +134,6 @@ public class StudentService {
                 profile.getRollNumber(),
                 profile.getDepartment(),
                 profile.getSeries(),
-                profile.getCgpa(),
                 profile.getPhone(),
                 user.getCreatedAt()
         );

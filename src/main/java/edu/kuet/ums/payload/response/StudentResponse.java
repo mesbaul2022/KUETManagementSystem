@@ -13,7 +13,6 @@ public class StudentResponse {
     private String rollNumber;
     private String department;
     private String series;
-    private Double cgpa;
     private String phone;
     private LocalDateTime createdAt;
 
@@ -21,7 +20,7 @@ public class StudentResponse {
     }
 
     public StudentResponse(Long id, Long userId, String username, String email, String role, String fullName,
-                           String rollNumber, String department, String series, Double cgpa, String phone,
+                           String rollNumber, String department, String series, String phone,
                            LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
@@ -32,7 +31,6 @@ public class StudentResponse {
         this.rollNumber = rollNumber;
         this.department = department;
         this.series = series;
-        this.cgpa = cgpa;
         this.phone = phone;
         this.createdAt = createdAt;
     }
@@ -107,14 +105,6 @@ public class StudentResponse {
 
     public void setSeries(String series) {
         this.series = series;
-    }
-
-    public Double getCgpa() {
-        return cgpa;
-    }
-
-    public void setCgpa(Double cgpa) {
-        this.cgpa = cgpa;
     }
 
     public String getPhone() {

@@ -80,14 +80,14 @@ function logToApiConsole(method, endpoint, status, data, duration) {
   const statusClass = `status-${status}`;
 
   entry.innerHTML = `
-    <span style="color:#64748b">[${time}]</span>
-    <span class="method-badge method-${method}">${method}</span>
-    <span style="color:#f8fafc; font-weight:600">${endpoint}</span>
-    <span class="status-badge-code ${statusClass}">${status}</span>
-    <span style="color:#64748b; font-size:0.75rem">${duration}ms</span>
-    <div style="color:#94a3b8; margin-top:4px; max-height:80px; overflow-y:auto; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px">
-      ${JSON.stringify(data)}
+    <div class="console-log-header">
+      <span class="console-log-time">[${time}]</span>
+      <span class="method-badge method-${method}">${method}</span>
+      <span class="console-log-endpoint">${endpoint}</span>
+      <span class="status-badge-code ${statusClass}">${status}</span>
+      <span class="console-log-duration">${duration}ms</span>
     </div>
+    <div class="console-log-payload">${escapeHtml(typeof data === 'string' ? data : JSON.stringify(data))}</div>
   `;
 
   consoleEl.insertBefore(entry, consoleEl.firstChild);
@@ -131,10 +131,10 @@ async function login(username, password) {
 async function quickLoginAs(role) {
   let u = 'admin', p = 'admin123';
   if (role === 'TEACHER') {
-    u = 'teacher_rokib';
+    u = 'teacher_mahmud';
     p = 'teacher123';
   } else if (role === 'STUDENT') {
-    u = 'student_tanvir';
+    u = 'student_mesba';
     p = 'student123';
   }
   await login(u, p);
@@ -485,16 +485,16 @@ function renderStudentsTable(students) {
     <tr>
       <td>
         <div class="user-cell">
-          <div class="user-avatar" style="background:#10b981">${escapeHtml(s.fullName.charAt(0))}</div>
+          <div class="user-avatar" style="background:#047857">${escapeHtml(s.fullName.charAt(0))}</div>
           <div>
             <div class="name">${escapeHtml(s.fullName)}</div>
-            <div class="sub">@${escapeHtml(s.username)} • Roll: ${escapeHtml(s.rollNumber)}</div>
+            <div class="sub">@${escapeHtml(s.username)}</div>
           </div>
         </div>
       </td>
       <td><span class="pill-badge">${escapeHtml(s.department)}</span></td>
-      <td><span class="pill-badge" style="background:rgba(229,178,62,0.15); color:var(--kuet-gold)">${escapeHtml(s.series)}</span></td>
-      <td><span class="cgpa-badge">${s.cgpa !== null && s.cgpa !== undefined ? s.cgpa.toFixed(2) : 'N/A'}</span></td>
+      <td><span class="pill-badge" style="background:var(--kuet-gold-light); color:var(--kuet-gold)">${escapeHtml(s.series)}</span></td>
+      <td><span class="pill-badge" style="font-family:var(--font-mono); font-weight:700; color:var(--kuet-green)">${escapeHtml(s.rollNumber)}</span></td>
       <td>${escapeHtml(s.email)}</td>
       <td>${escapeHtml(s.phone || 'N/A')}</td>
       <td>
@@ -627,7 +627,6 @@ function openEditStudentModal(id) {
   document.getElementById('studentRollNumber').value = s.rollNumber;
   document.getElementById('studentDepartment').value = s.department;
   document.getElementById('studentSeries').value = s.series;
-  document.getElementById('studentCgpa').value = s.cgpa || '';
   document.getElementById('studentEmail').value = s.email;
   document.getElementById('studentPhone').value = s.phone || '';
   document.getElementById('studentPassword').value = '';
@@ -727,7 +726,6 @@ async function submitStudentForm(e) {
     rollNumber: document.getElementById('studentRollNumber').value,
     department: document.getElementById('studentDepartment').value,
     series: document.getElementById('studentSeries').value,
-    cgpa: parseFloat(document.getElementById('studentCgpa').value) || 0.0,
     email: document.getElementById('studentEmail').value,
     phone: document.getElementById('studentPhone').value
   };

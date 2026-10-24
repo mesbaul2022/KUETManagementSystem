@@ -26,22 +26,18 @@ public class StudentProfile {
     @Column(nullable = false, length = 20)
     private String series;
 
-    @Column
-    private Double cgpa;
-
     @Column(length = 20)
     private String phone;
 
     public StudentProfile() {
     }
 
-    public StudentProfile(User user, String fullName, String rollNumber, String department, String series, Double cgpa, String phone) {
+    public StudentProfile(User user, String fullName, String rollNumber, String department, String series, String phone) {
         this.user = user;
         this.fullName = fullName;
         this.rollNumber = rollNumber;
         this.department = department;
         this.series = series;
-        this.cgpa = cgpa;
         this.phone = phone;
     }
 
@@ -91,14 +87,6 @@ public class StudentProfile {
 
     public void setSeries(String series) {
         this.series = series;
-    }
-
-    public Double getCgpa() {
-        return cgpa;
-    }
-
-    public void setCgpa(Double cgpa) {
-        this.cgpa = cgpa;
     }
 
     public String getPhone() {
