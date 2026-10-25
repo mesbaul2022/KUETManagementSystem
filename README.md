@@ -1,6 +1,6 @@
 # 🏛️ KUET University Management System (UMS)
 
-> A modern, secure, and containerized University Management System web application for **Khulna University of Engineering & Technology (KUET)**, built using **Java Spring Boot**, **Spring Security (RBAC + JWT)**, **PostgreSQL / H2**, and **Docker Compose**.
+> A modern, simple, and containerized University Management System web application for **Khulna University of Engineering & Technology (KUET)**, built using **Java Spring Boot**, **Spring Security (RBAC + BCrypt)**, **Embedded In-Memory H2 Database**, and **Docker Compose**.
 
 ---
 
@@ -11,8 +11,9 @@
 | **REST API** | Full CRUD operations for `Admin`, `Teacher`, and `Student` resources with standard REST conventions, JSON responses, DTO validation, and proper HTTP status codes (`200`, `201`, `204`, `400`, `401`, `403`, `404`). | ✅ Complete |
 | **Spring Security & RBAC** | Stateless JWT authentication, login/logout, BCrypt password hashing, method-level `@PreAuthorize`, and strict Role-Based Access Control (RBAC). | ✅ Complete |
 | **Role Permissions** | **Admins** manage all 3 resources (`Admins`, `Teachers`, `Students`).<br>**Teachers** manage only `Teachers` (restricted from `Admins` and `Students`).<br>**Students** manage only `Students` (restricted from `Admins` and `Teachers`). | ✅ Complete |
-| **Dockerization** | Multi-stage production `Dockerfile` (eclipse-temurin 21) + `compose.yaml` orchestrating Spring Boot and PostgreSQL with health-checked networking. | ✅ Complete |
-| **Interactive Web Application** | Premium KUET-branded portal with dark mode, quick 1-click role switcher, responsive CRUD tables, modals, and a live REST API activity logger. | ✅ Complete |
+| **Dockerization** | Multi-stage production `Dockerfile` (eclipse-temurin 21) + `compose.yaml` containerizing the application with zero external database setup required. | ✅ Complete |
+| **Embedded In-Memory DB** | Self-contained in-memory H2 database with pre-seeded faculty, administration, and students; requires zero external DB server installation or configuration. | ✅ Complete |
+| **Interactive Web Application** | KUET-branded portal with dark mode, quick 1-click role switcher, responsive CRUD tables, modals, and a live REST API activity logger. | ✅ Complete |
 
 ---
 
@@ -111,16 +112,21 @@ The application includes an embedded Maven wrapper (`./mvnw` or `mvnw.cmd`) and 
 
 ---
 
-### Option 2: Run with Docker Compose (PostgreSQL + App)
-
-To run the application and a production PostgreSQL database together:
-
-1. **Start the containers:**
+### Option 2: Run with Docker Compose (Single Container, Zero DB Setup)
+ 
+To run the containerized application without any external database install:
+ 
+1. **Start the container:**
    ```bash
    docker compose up --build
    ```
 
-2. **Stop the containers:**
+2. **Access the application:**
+   ```text
+   http://localhost:8088/
+   ```
+
+3. **Stop the container:**
    ```bash
    docker compose down
    ```
@@ -271,7 +277,7 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 kuet-management-system/
 ├── Dockerfile                         # Production multi-stage Dockerfile (Temurin 21)
-├── compose.yaml                       # Docker Compose specification (App + PostgreSQL)
+├── compose.yaml                       # Simple Docker Compose specification (No external DB)
 ├── pom.xml                            # Maven dependencies & build configuration
 ├── README.md                          # Project documentation
 └── src/
@@ -313,7 +319,7 @@ kuet-management-system/
     │   │       ├── StudentService.java
     │   │       └── TeacherService.java
     │   └── resources/
-    │       ├── application.yml                 # Configuration (H2 dev & PostgreSQL docker)
+    │       ├── application.yml                 # Unified configuration (Embedded H2)
     │       └── static/
     │           ├── css/styles.css              # Custom styling & KUET identity
     │           ├── js/app.js                   # Client logic, JWT handling & live logger

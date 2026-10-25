@@ -1,5 +1,5 @@
 services:
-  app:
+  kuet-ums:
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,43 +9,3 @@ services:
       - "8088:8088"
     environment:
       - PORT=8088
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/kuet_ums
-      - SPRING_DATASOURCE_USERNAME=kuet_admin
-      - SPRING_DATASOURCE_PASSWORD=kuet_secret_pass
-      - APP_JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      - APP_JWT_EXPIRATION_MILLISECONDS=86400000
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - kuet-network
-
-  db:
-    image: postgres:16-alpine
-    container_name: kuet-ums-db
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=kuet_ums
-      - POSTGRES_USER=kuet_admin
-      - POSTGRES_PASSWORD=kuet_secret_pass
-    volumes:
-      - kuet_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kuet_admin -d kuet_ums"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - kuet-network
-
-volumes:
-  kuet_pgdata:
-    driver: local
-
-networks:
-  kuet-network:
-    driver: bridge

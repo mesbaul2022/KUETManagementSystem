@@ -67,14 +67,14 @@ The **KUET Management System** is an enterprise-grade university portal built wi
                              ▼
 ┌──────────────────────────────────────────────────────────┐
 │                   Database Engine                        │
-│          H2 (In-Memory Dev) or PostgreSQL (Docker)       │
+│             Embedded In-Memory H2 Database               │
 └──────────────────────────────────────────────────────────┘
 ```
 
 ### Why Layers?
 In beginner terms, separating code into layers ensures:
 - **Cleanliness:** Controllers don't write SQL queries; Repositories don't handle web requests.
-- **Maintainability:** You can change the database engine from H2 to PostgreSQL without changing a single line of business logic or UI code.
+- **Maintainability & Simplicity:** Self-contained in-memory database requires zero external database installation, making it instantly runnable.
 - **Security:** Security checks happen before the request even reaches your controllers.
 
 ---
@@ -113,7 +113,7 @@ Here is what happens behind the scenes during a typical user interaction:
 
 ```text
 kuet-management-system/
-├── compose.yaml                    # Docker Compose orchestration (App + PostgreSQL)
+├── compose.yaml                    # Simple Docker Compose containerization (No external DB)
 ├── Dockerfile                      # Multi-stage production container build
 ├── documentation.md                # Full system architecture documentation (this file)
 ├── mvnw & mvnw.cmd                 # Maven wrapper scripts (Windows & Linux)
@@ -349,11 +349,13 @@ DTOs (Data Transfer Objects) ensure internal database entities are never exposed
 
 ### 4.10 Configuration Files
 - **File:** `pom.xml`
-  - Defines project dependencies: Spring Boot Starter Web, Spring Boot Starter Security, Spring Boot Starter Data JPA, H2 Database Driver, PostgreSQL Driver, `jjwt` (Java JWT library), and Spring Boot Starter Validation.
+  - Defines project dependencies: Spring Boot Starter Web, Spring Boot Starter Security, Spring Boot Starter Data JPA, Embedded H2 Database Driver, `jjwt` (Java JWT library), and Spring Boot Starter Validation.
 - **File:** `src/main/resources/application.yml`
-  - Configures server port (`8088`), active profile (`dev`), JWT secret key and expiration, and separate profiles:
-    - `dev`: In-memory H2 database (`jdbc:h2:mem:kuet_ums`) and web H2 console enabled.
-    - `docker`: PostgreSQL connection (`jdbc:postgresql://db:5432/kuet_ums`).
+  - Unified, single configuration:
+    - Server port (`8088`).
+    - Embedded in-memory H2 database (`jdbc:h2:mem:kuet_ums`).
+    - Web H2 console enabled (`/h2-console`).
+    - Stateless JWT secret key and expiration.
 
 ---
 
@@ -390,9 +392,8 @@ DTOs (Data Transfer Objects) ensure internal database entities are never exposed
     - *Stage 1 (Builder):* Uses `eclipse-temurin:21-jdk`, downloads dependencies with layer caching, and builds the production `.jar`.
     - *Stage 2 (Runtime):* Uses lightweight `eclipse-temurin:21-jre-alpine`, creates a non-root system user (`kuet`), configures a health check, and launches `app.jar` on port `8088`.
 - **File:** `compose.yaml`
-  - Orchestrates two containers on an internal network (`kuet-network`):
-    - `app`: Spring Boot application connected to the database with active profile `docker`.
-    - `db`: PostgreSQL 16 container with health checks and persistent volume storage (`kuet_pgdata`).
+  - Containerizes the Spring Boot application on port `8088` with embedded in-memory database:
+    - Runs cleanly with zero external database dependencies.
 
 ---
 
