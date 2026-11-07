@@ -276,8 +276,12 @@ Authorization: Bearer <JWT_TOKEN>
 
 ```
 kuet-management-system/
+├── .github/
+│   └── workflows/
+│       └── maven.yml                  # GitHub Actions automated CI/CD pipeline
 ├── Dockerfile                         # Production multi-stage Dockerfile (Temurin 21)
 ├── compose.yaml                       # Simple Docker Compose specification (No external DB)
+├── documentation.md                   # Full system architecture documentation
 ├── pom.xml                            # Maven dependencies & build configuration
 ├── README.md                          # Project documentation
 └── src/
@@ -326,5 +330,37 @@ kuet-management-system/
     │           └── index.html                  # Responsive Single-Page Application
     └── test/
         └── java/edu/kuet/ums/
-            └── KuetManagementSystemApplicationTests.java  # Comprehensive RBAC & CRUD test suite
+            ├── KuetManagementSystemApplicationTests.java  # Comprehensive RBAC & CRUD test suite
+            ├── unit/                                      # Mockito-isolated Unit Tests (28 tests)
+            │   ├── AdminServiceUnitTest.java
+            │   ├── AuthServiceUnitTest.java
+            │   ├── JwtTokenProviderUnitTest.java
+            │   ├── StudentServiceUnitTest.java
+            │   └── TeacherServiceUnitTest.java
+            └── integration/                               # Spring Boot MockMvc Integration Tests (24 tests)
+                ├── AdminControllerIntegrationTest.java
+                ├── AuthControllerIntegrationTest.java
+                ├── StudentControllerIntegrationTest.java
+                └── TeacherControllerIntegrationTest.java
 ```
+
+---
+
+## 🧪 Automated Testing & GitHub Actions CI/CD
+
+The project includes an enterprise-grade automated testing suite with **52 total tests** (28 Unit Tests and 24 Integration Tests) passing locally and in continuous integration on GitHub Actions.
+
+### Running Tests Locally
+```powershell
+# Run entire test suite (Unit + Integration)
+.\mvnw.cmd test
+
+# Run only unit tests (Lightning-fast Mockito execution)
+.\mvnw.cmd test -Dtest="*UnitTest"
+
+# Run only integration tests (Spring Boot MockMvc)
+.\mvnw.cmd test -Dtest="*IntegrationTest"
+```
+
+### GitHub Actions Pipeline
+Every push and pull request to branch `main` automatically triggers `.github/workflows/maven.yml` on Ubuntu with JDK 21, verifying compilation, executing all 52 tests, and publishing test reports.

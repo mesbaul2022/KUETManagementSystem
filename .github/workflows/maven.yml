@@ -1,0 +1,41 @@
+name: Java CI with Maven (KUET Management System)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Run Automated Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: 🛡️ Ensure Maven Wrapper Permissions
+        run: chmod +x ./mvnw
+
+      - name: 🧪 Execute Unit & Integration Tests
+        run: ./mvnw clean test --no-transfer-progress
+
+      - name: 📦 Build Executable JAR Package
+        run: ./mvnw package -DskipTests --no-transfer-progress
+
+      - name: 📊 Publish Test Reports Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-reports
+          path: target/surefire-reports/
+          retention-days: 7

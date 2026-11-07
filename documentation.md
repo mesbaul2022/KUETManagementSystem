@@ -22,10 +22,12 @@
    - [4.10 Configuration Files](#410-configuration-files)
    - [4.11 Frontend Web Portal](#411-frontend-web-portal)
    - [4.12 Containerization & DevOps](#412-containerization--devops)
-   - [4.13 Automated Integration Tests](#413-automated-integration-tests)
+   - [4.13 Automated Testing Suite (Unit Tests & Integration Tests)](#413-automated-testing-suite-unit-tests--integration-tests)
 5. [Role-Based Access Control (RBAC) Matrix](#5-role-based-access-control-rbac-matrix)
 6. [Pre-Seeded Accounts Directory](#6-pre-seeded-accounts-directory)
 7. [How to Run and Test Manually](#7-how-to-run-and-test-manually)
+8. [Continuous Integration with GitHub Actions Pipeline](#8-continuous-integration-with-github-actions-pipeline)
+9. [Complete Testing Taxonomy: Unit vs Integration Tests](#9-complete-testing-taxonomy-unit-vs-integration-tests)
 
 ---
 
@@ -113,6 +115,9 @@ Here is what happens behind the scenes during a typical user interaction:
 
 ```text
 kuet-management-system/
+├── .github/
+│   └── workflows/
+│       └── maven.yml                   # GitHub Actions automated CI/CD pipeline
 ├── compose.yaml                    # Simple Docker Compose containerization (No external DB)
 ├── Dockerfile                      # Multi-stage production container build
 ├── documentation.md                # Full system architecture documentation (this file)
@@ -182,7 +187,18 @@ kuet-management-system/
 │   │           └── images/kuet-logo.png             # Official KUET emblem asset
 │   └── test/
 │       └── java/edu/kuet/ums/
-│           └── KuetManagementSystemApplicationTests.java # Automated MockMvc integration tests
+│           ├── KuetManagementSystemApplicationTests.java # Context loading & core E2E suite
+│           ├── unit/                                     # Fast, isolated Mockito unit tests (28 tests)
+│           │   ├── AdminServiceUnitTest.java             # Admin business rules & validation
+│           │   ├── AuthServiceUnitTest.java              # User authentication & token issuance
+│           │   ├── JwtTokenProviderUnitTest.java         # Token creation, parsing & expiry
+│           │   ├── StudentServiceUnitTest.java           # Student CRUD rules & uniqueness
+│           │   └── TeacherServiceUnitTest.java           # Faculty registration & ID checks
+│           └── integration/                              # Spring Boot MockMvc integration tests (24 tests)
+│               ├── AdminControllerIntegrationTest.java   # Admin endpoints & RBAC verification
+│               ├── AuthControllerIntegrationTest.java    # Authentication & token endpoints
+│               ├── StudentControllerIntegrationTest.java # Student CRUD & authorization
+│               └── TeacherControllerIntegrationTest.java # Teacher CRUD & authorization
 ```
 
 ---
@@ -397,14 +413,82 @@ DTOs (Data Transfer Objects) ensure internal database entities are never exposed
 
 ---
 
-### 4.13 Automated Integration Tests
-- **File:** `src/test/java/edu/kuet/ums/KuetManagementSystemApplicationTests.java`
-  - Automated integration tests verifying:
-    1. Unauthenticated requests receive `401 Unauthorized`.
-    2. Admin has full access to all three resources (`/api/admins`, `/api/teachers`, `/api/students`).
-    3. Teacher can access `/api/teachers`, but receives `403 Forbidden` on `/api/admins` and `/api/students`.
-    4. Student can access `/api/students`, but receives `403 Forbidden` on `/api/admins` and `/api/teachers`.
-    5. Complete CRUD lifecycle test (creating and reading a student).
+### 4.13 Automated Testing Suite (Unit Tests & Integration Tests)
+
+The testing architecture in KUET Management System is divided strictly into **Unit Tests** and **Integration Tests**, achieving high test coverage (52 tests total), deterministic execution, and fast CI/CD feedback.
+
+#### 4.13.1 Unit Testing Layer (Mockito Isolation — 28 Unit Tests)
+Unit tests verify individual components in complete isolation from the Spring framework, web container, and database. External dependencies (like JPA repositories, `PasswordEncoder`, and `AuthenticationManager`) are mocked using Mockito via `@ExtendWith(MockitoExtension.class)`.
+
+- **`StudentServiceUnitTest.java` (8 Tests):**
+  - `testGetAllStudents_ReturnsList`: Queries repository and verifies mapping to `StudentResponse` DTOs.
+  - `testGetStudentById_Success`: Validates retrieval and response mapping when student exists.
+  - `testGetStudentById_NotFound_ThrowsException`: Asserts `ResourceNotFoundException` is thrown when ID does not exist.
+  - `testCreateStudent_Success`: Verifies password hashing, entity instantiation, role assignment (`ROLE_STUDENT`), and repository persistence.
+  - `testCreateStudent_DuplicateUsername_ThrowsBadRequest`: Asserts `BadRequestException` when username is already taken.
+  - `testCreateStudent_DuplicateRollNumber_ThrowsBadRequest`: Asserts `BadRequestException` when roll number is already registered.
+  - `testUpdateStudent_Success`: Tests updating mutable profile fields and re-encoding password when provided.
+  - `testDeleteStudent_Scenarios`: Verifies repository `delete()` on success and `ResourceNotFoundException` on missing ID.
+
+- **`TeacherServiceUnitTest.java` (6 Tests):**
+  - `testGetAllTeachers_ReturnsList`: Verifies fetching all faculty records and DTO mapping.
+  - `testGetTeacherById_Success`: Asserts single teacher profile retrieval by ID.
+  - `testGetTeacherById_NotFound_ThrowsException`: Ensures `ResourceNotFoundException` when ID does not exist.
+  - `testCreateTeacher_Success`: Verifies role assignment (`ROLE_TEACHER`), BCrypt encryption, and profile persistence.
+  - `testCreateTeacher_DuplicateTeacherId_ThrowsBadRequest`: Prevents registration with an already used Teacher ID.
+  - `testDeleteTeacher_Success`: Ensures profile deletion when teacher exists.
+
+- **`AdminServiceUnitTest.java` (7 Tests):**
+  - `testGetAllAdmins_ReturnsList`: Verifies admin list querying and DTO mapping.
+  - `testGetAdminById_Success`: Asserts single admin profile retrieval by ID.
+  - `testGetAdminById_NotFound_ThrowsException`: Verifies `ResourceNotFoundException` on missing ID.
+  - `testCreateAdmin_Success`: Verifies admin account creation with `ROLE_ADMIN` and encoded credentials.
+  - `testCreateAdmin_DuplicateEmployeeId_ThrowsBadRequest`: Asserts uniqueness check on employee IDs.
+  - `testDeleteAdmin_LastAdmin_ThrowsBadRequest`: Asserts critical business rule preventing deletion of the last remaining admin (`count <= 1`).
+  - `testDeleteAdmin_Success`: Confirms deletion proceeds when more than one admin remains in the system (`count > 1`).
+
+- **`JwtTokenProviderUnitTest.java` (5 Tests):**
+  - `testGenerateAndValidateToken_Success`: Generates token with custom claims and asserts `validateToken()` returns `true`.
+  - `testGetUsernameFromJWT_Success`: Extracts username claim accurately from signed JWT payload.
+  - `testValidateToken_MalformedToken_ReturnsFalse`: Catches `MalformedJwtException` and safely returns `false`.
+  - `testValidateToken_EmptyOrNullToken_ReturnsFalse`: Rejects empty strings and whitespace safely without throwing exceptions.
+  - `testValidateToken_ExpiredToken_ReturnsFalse`: Catches `ExpiredJwtException` on tokens with past timestamp and returns `false`.
+
+- **`AuthServiceUnitTest.java` (2 Tests):**
+  - `testAuthenticateUser_StudentSuccess`: Stubs `AuthenticationManager.authenticate()`, generates token, finds user profile, and constructs `AuthResponse`.
+  - `testGetCurrentUser_UserNotFound_ThrowsException`: Verifies `BadRequestException` when user ID has no matching DB record.
+
+---
+
+#### 4.13.2 Integration Testing Layer (Spring Boot & MockMvc — 24 Integration Tests)
+Integration tests bootstrap the real Spring Application Context (`@SpringBootTest`), Spring Security filter chain, embedded in-memory H2 database, and dispatch simulated HTTP requests via `MockMvc` (`@AutoConfigureMockMvc`).
+
+- **`AuthControllerIntegrationTest.java` (5 Tests):**
+  - `testLogin_AdminSuccess`: Dispatches `POST /api/auth/login` with valid credentials; asserts HTTP `200 OK`, non-null JWT token, and `ROLE_ADMIN`.
+  - `testLogin_InvalidCredentials`: Dispatches `POST /api/auth/login` with wrong password; asserts HTTP `401 Unauthorized`.
+  - `testGetCurrentUser_Unauthenticated`: Asserts `GET /api/auth/me` without Bearer token returns HTTP `401 Unauthorized`.
+  - `testLoginAndFetchProfileFlow`: End-to-end integration flow — logs in with username/password, extracts Bearer token, and executes `GET /api/auth/me` with `Authorization: Bearer <token>` to verify authentication.
+  - `testLogout`: Dispatches `POST /api/auth/logout`; asserts security context clearing and `200 OK`.
+
+- **`StudentControllerIntegrationTest.java` (4 Tests):**
+  - `testAdminFullStudentCrudLifecycle`: Performs full end-to-end lifecycle (`POST` create -> `GET` read -> `PUT` update -> `DELETE` remove -> `GET` verify `404 Not Found`).
+  - `testStudentRoleAccessAllowed`: Verifies `@WithMockUser(roles = "STUDENT")` can access `/api/students`.
+  - `testTeacherRoleForbiddenFromStudents`: Enforces RBAC rule — `@WithMockUser(roles = "TEACHER")` accessing `/api/students` receives HTTP `403 Forbidden`.
+  - `testCreateStudent_InvalidPayload_ReturnsBadRequest`: Verifies Jakarta Validation triggers HTTP `400 Bad Request` when required fields are missing.
+
+- **`TeacherControllerIntegrationTest.java` (3 Tests):**
+  - `testAdminFullTeacherCrudLifecycle`: Admin creates, reads, updates, and deletes faculty profiles.
+  - `testTeacherRoleCanAccessTeachers`: Verifies teacher role can access teacher directory (`200 OK`).
+  - `testStudentRoleForbiddenFromTeachers`: Enforces RBAC rule — student role is blocked with HTTP `403 Forbidden`.
+
+- **`AdminControllerIntegrationTest.java` (4 Tests):**
+  - `testAdminRoleCanAccessAdmins`: Verifies admin role has full access to administrator listings (`200 OK`).
+  - `testTeacherRoleForbiddenFromAdmins`: Block teachers from viewing or managing administrator profiles (`403 Forbidden`).
+  - `testStudentRoleForbiddenFromAdmins`: Block students from viewing or managing administrator profiles (`403 Forbidden`).
+  - `testAdminCreateAndDeleteFlow`: Verifies administrator provisioning and deletion while maintaining minimum admin constraint.
+
+- **`KuetManagementSystemApplicationTests.java` (8 Tests):**
+  - Context load verification, global security entrypoint checks, unauthenticated 401 response checks across all endpoints, and RBAC matrix validation across Admin, Teacher, and Student roles.
 
 ---
 
@@ -484,4 +568,184 @@ docker compose up --build
 To stop:
 ```bash
 docker compose down
+```
+
+---
+
+## 8. Continuous Integration with GitHub Actions Pipeline
+
+Continuous Integration (CI) guarantees that every code modification pushed to the repository is automatically checked out, compiled, and validated through the automated test suite before merging or deployment.
+
+### 8.1 Workflow Architecture (`.github/workflows/maven.yml`)
+
+```text
+┌────────────────────────────────────────────────────────┐
+│               GitHub Repository Event                  │
+│       • Push to main branch                            │
+│       • Pull Request to main branch                    │
+│       • Manual trigger via workflow_dispatch           │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│            Ubuntu Runner (ubuntu-latest)               │
+│                                                        │
+│  1. 📥 actions/checkout@v4                             │
+│     Downloads codebase into runner workspace           │
+│                                                        │
+│  2. ☕ actions/setup-java@v4                           │
+│     Configures Eclipse Temurin JDK 21 & Maven cache   │
+│                                                        │
+│  3. 🛡️ chmod +x ./mvnw                                 │
+│     Guarantees executable bit on wrapper script        │
+│                                                        │
+│  4. 🧪 ./mvnw clean test --no-transfer-progress        │
+│     Executes 52 Unit and Integration Tests             │
+│                                                        │
+│  5. 📦 ./mvnw package -DskipTests                      │
+│     Compiles production executable JAR artifact        │
+│                                                        │
+│  6. 📊 actions/upload-artifact@v4                      │
+│     Archives Surefire XML test reports for 7 days      │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│            CI Status: ✅ SUCCESS (Green Badge)         │
+└────────────────────────────────────────────────────────┘
+```
+
+### 8.2 Detailed Step-by-Step Instructions to Pass Tests on GitHub Actions
+
+Follow these exact steps to ensure your GitHub Actions pipeline triggers and succeeds:
+
+#### Step 1: Commit and Push Code to GitHub
+Ensure all test files, source files, and the `.github/workflows/maven.yml` file are staged, committed, and pushed:
+```bash
+git add .
+git commit -m "Add Unit Tests, Integration Tests, and GitHub Actions CI workflow"
+git push origin main
+```
+
+#### Step 2: Navigate to GitHub Actions in Your Browser
+1. Open your repository on GitHub: [https://github.com/mesbaul2022/KUETManagementSystem](https://github.com/mesbaul2022/KUETManagementSystem)
+2. Click on the **Actions** tab in the top navigation bar.
+
+#### Step 3: Monitor the Automated Build Execution
+1. You will see a newly triggered workflow titled **"Java CI with Maven (KUET Management System)"**.
+2. Click on the active workflow run to enter the summary view.
+3. In the left panel, click on **"Build & Run Automated Test Suite"** to view live, color-coded console logs.
+
+#### Step 4: Verify Test Execution Steps
+Inside the log viewer, observe each step succeeding:
+- **`📥 Checkout Repository Code`**: Clones repository at HEAD commit.
+- **`☕ Set up JDK 21 (Eclipse Temurin)`**: Sets up the Java 21 runtime and warms Maven dependency cache.
+- **`🛡️ Ensure Maven Wrapper Permissions`**: Runs `chmod +x ./mvnw` to eliminate permission errors.
+- **`🧪 Execute Unit & Integration Tests`**: Executes Surefire plugin:
+  ```text
+  [INFO] Running Unit Tests: AdminService Business Logic
+  [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Unit Tests: AuthService Authentication Logic
+  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Unit Tests: JwtTokenProvider Engine
+  [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Unit Tests: StudentService Business Logic
+  [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Unit Tests: TeacherService Business Logic
+  [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Integration Tests: AdminController REST Endpoints & RBAC Enforcement
+  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Integration Tests: AuthController Endpoints & JWT Pipeline
+  [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Integration Tests: StudentController REST Endpoints & RBAC
+  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running Integration Tests: TeacherController REST Endpoints & RBAC
+  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] Running edu.kuet.ums.KuetManagementSystemApplicationTests
+  [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] ------------------------------------------------------------------------
+  [INFO] Tests run: 52, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] BUILD SUCCESS
+  ```
+- **`📦 Build Executable JAR Package`**: Generates `target/kuet-management-system-1.0.0.jar`.
+- **`📊 Publish Test Reports Artifact`**: Archives surefire test XML summaries.
+
+#### Step 5: Manual Triggering (On-Demand Execution)
+If you want to trigger the pipeline manually at any time without pushing new code:
+1. Go to the **Actions** tab on GitHub.
+2. Select **"Java CI with Maven (KUET Management System)"** in the left sidebar under *Workflows*.
+3. Click the **"Run workflow"** dropdown button on the right.
+4. Select the **`main`** branch and click the green **"Run workflow"** button.
+
+#### Step 6: Downloading Test Reports
+1. In the workflow run summary, scroll down to the **Artifacts** section.
+2. Click **`surefire-test-reports`** to download a ZIP archive containing individual XML reports for each test class for auditing or compliance.
+
+---
+
+### 8.3 Troubleshooting CI/CD Failures (Key Pitfalls & Solutions)
+
+| Potential Failure Point | Root Cause | Built-in Resolution in this Project |
+| :--- | :--- | :--- |
+| `Permission denied: ./mvnw` | Git on Windows strips Linux executable bits (`+x`). | Workflow includes explicit `run: chmod +x ./mvnw` step, and `git update-index --chmod=+x mvnw` is recorded in git index. |
+| `Unsupported class file major version` | Runner Java version does not match compiled bytecode. | Workflow fixes JDK version to `temurin 21`, aligning with `Dockerfile` and local runtime. |
+| Port Collision (`8088 in use`) | Multiple tests trying to bind to localhost network ports. | Integration tests use Spring's `MockMvc` mock servlet container, executing inside memory without opening TCP sockets. |
+| Database Unavailable | Runner lacks MySQL/Postgres service containers. | Application uses self-contained in-memory H2 database (`jdbc:h2:mem:kuet_ums`), zero network dependencies. |
+
+---
+
+## 9. Complete Testing Taxonomy: Unit vs Integration Tests
+
+Understanding the distinction between testing tiers is fundamental to software reliability and enterprise architecture.
+
+### 9.1 Comparison Matrix
+
+| Dimension | 🔬 Unit Tests (Service / Security) | 🌐 Integration Tests (Controller / Spring MVC) |
+| :--- | :--- | :--- |
+| **Primary Scope** | A single class or method in complete isolation. | Cross-cutting collaboration across Filters, Controllers, Services, and DB. |
+| **Spring Context** | ❌ **No Spring Context** loaded. Runs as pure JUnit 5 test. | 🟢 **Full Spring ApplicationContext** loaded (`@SpringBootTest`). |
+| **Database** | ❌ **No Database**. Repositories are mocked via Mockito. | 🟢 **Real Embedded Database**. Runs queries against in-memory H2. |
+| **Execution Speed** | ⚡ Extremely fast (~10–50 milliseconds per class). | ⏱️ Moderate (~1–4 seconds to bootstrap Spring container). |
+| **HTTP Dispatcher** | ❌ None. Direct Java method invocation. | 🟢 Simulated via `MockMvc` (Headers, JSON serialization, URL routes). |
+| **Security Layer** | ❌ Spring Security bypassed or manually stubbed. | 🟢 Full filter chain tested (`JwtAuthenticationFilter`, `@PreAuthorize`). |
+| **Failure Indication** | Indicates a specific logical bug in domain code. | Indicates routing, JSON parsing, database constraint, or authorization failure. |
+
+---
+
+### 9.2 Deep Dive: Unit Testing Methodology
+Unit tests use **Mockito** to eliminate external variables:
+1. **`@Mock`**: Creates dummy proxy implementations of classes (e.g. `UserRepository`, `PasswordEncoder`).
+2. **`@InjectMocks`**: Creates the real instance of the service under test (`StudentService`) and injects the mocks into its constructor.
+3. **`when(...).thenReturn(...)`**: Defines predictable return values for mock methods (stubbing).
+4. **`verify(mock, times(1)).method(...)`**: Verifies that a specific method was actually invoked with the expected parameters.
+5. **`assertThrows(...)`**: Validates that invalid operations raise the appropriate custom exception (`BadRequestException`, `ResourceNotFoundException`).
+
+### 9.3 Deep Dive: Integration Testing Methodology
+Integration tests use **Spring Boot Test + MockMvc**:
+1. **`@SpringBootTest`**: Discovers `@SpringBootConfiguration` and spins up the whole application environment.
+2. **`@AutoConfigureMockMvc`**: Configures the `MockMvc` engine to simulate incoming HTTP calls without requiring a running web server.
+3. **`@WithMockUser`**: Injects a fake `SecurityContext` with specific roles (`ROLE_ADMIN`, `ROLE_TEACHER`, `ROLE_STUDENT`) to test authorization boundaries.
+4. **`jsonPath("$.field", is("value"))`**: Inspects outgoing JSON payloads and verifies property names and types.
+
+---
+
+### 9.4 How to Run Tests Locally
+
+Execute from project root directory:
+
+```powershell
+# 1. Run all 52 unit & integration tests
+.\mvnw.cmd test
+
+# 2. Run ONLY unit tests (Fast feedback: < 3 seconds)
+.\mvnw.cmd test -Dtest="*UnitTest"
+
+# 3. Run ONLY integration tests
+.\mvnw.cmd test -Dtest="*IntegrationTest"
+
+# 4. Run a specific test class
+.\mvnw.cmd test -Dtest="StudentServiceUnitTest"
+
+# 5. Linux / macOS equivalent
+./mvnw test
 ```
