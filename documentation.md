@@ -570,6 +570,24 @@ To stop:
 docker compose down
 ```
 
+### Running and Testing in Visual Studio Code (VS Code)
+
+#### 1. Running the Application in VS Code
+- **Via CodeLens:** Open `KuetManagementSystemApplication.java` and click the **`Run`** button directly above the `main` method, or press **`F5`** / `Ctrl + F5`.
+- **Via Integrated Terminal:** Press `Ctrl + \`` and run `.\mvnw.cmd spring-boot:run`.
+
+#### 2. Running Tests One-by-One in VS Code
+- **Method A (Inline CodeLens Buttons):** Open any test file (e.g. `StudentServiceUnitTest.java`). Look directly above any `@Test` method (e.g. `testCreateStudent_Success`) and click the clickable **`Run`** text. VS Code executes only that exact test in < 1 second and displays a green checkmark `✔`. Click **`Debug`** to step through the method with breakpoints.
+- **Method B (Test Explorer GUI 🧪):** Click the science beaker (🧪) icon on the left Activity Bar. Expand the test tree under `kuet-management-system` -> `src/test/java` -> `edu.kuet.ums.unit` or `integration`, and click the green Play button (**▶️**) next to any individual test method or class.
+- **Method C (Terminal Method Filtering):** Run exact single test methods using the `#` syntax:
+  ```powershell
+  # Run a single specific test method:
+  .\mvnw.cmd test -Dtest=StudentServiceUnitTest#testCreateStudent_Success
+
+  # Run all tests in a single class:
+  .\mvnw.cmd test -Dtest=StudentServiceUnitTest
+  ```
+
 ---
 
 ## 8. Continuous Integration with GitHub Actions Pipeline
